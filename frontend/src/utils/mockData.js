@@ -1,38 +1,20 @@
-// Generate realistic OHLCV candle data starting from a given timestamp
-export function generateCandles(startTime, count = 1440, intervalMs = 60000) {
-  const candles = [];
-  let price = 100 + Math.random() * 400; // Random starting price between 100-500
-  let time = startTime;
-
-  for (let i = 0; i < count; i++) {
-    const volatility = 0.002 + Math.random() * 0.003;
-    const drift = (Math.random() - 0.5) * 0.001;
-    
-    const open = price;
-    const change1 = price * (drift + volatility * (Math.random() - 0.5));
-    const change2 = price * (drift + volatility * (Math.random() - 0.5));
-    const change3 = price * (drift + volatility * (Math.random() - 0.5));
-    
-    const high = Math.max(open, open + change1, open + change2, open + change3) + Math.abs(price * volatility * Math.random());
-    const low = Math.min(open, open + change1, open + change2, open + change3) - Math.abs(price * volatility * Math.random());
-    const close = open + change3;
-    const volume = Math.floor(1000 + Math.random() * 50000);
-
-    candles.push({
-      time: Math.floor(time / 1000),
-      open: parseFloat(open.toFixed(2)),
-      high: parseFloat(high.toFixed(2)),
-      low: parseFloat(low.toFixed(2)),
-      close: parseFloat(close.toFixed(2)),
-      volume,
-    });
-
-    price = close;
-    time += intervalMs;
-  }
-
-  return candles;
-}
+// Available markets - expanded forex
+export const MARKETS = [
+  { id: 'spy', name: 'S&P 500', symbol: 'SPY', tvSymbol: 'AMEX:SPY', category: 'Indices', icon: '📈' },
+  { id: 'qqq', name: 'NASDAQ 100', symbol: 'QQQ', tvSymbol: 'NASDAQ:QQQ', category: 'Indices', icon: '📊' },
+  { id: 'dia', name: 'Dow Jones', symbol: 'DIA', tvSymbol: 'AMEX:DIA', category: 'Indices', icon: '🏛️' },
+  { id: 'eurusd', name: 'EUR/USD', symbol: 'EUR/USD', tvSymbol: 'FX:EURUSD', category: 'Forex', icon: '💱' },
+  { id: 'gbpusd', name: 'GBP/USD', symbol: 'GBP/USD', tvSymbol: 'FX:GBPUSD', category: 'Forex', icon: '💷' },
+  { id: 'usdjpy', name: 'USD/JPY', symbol: 'USD/JPY', tvSymbol: 'FX:USDJPY', category: 'Forex', icon: '💴' },
+  { id: 'audusd', name: 'AUD/USD', symbol: 'AUD/USD', tvSymbol: 'FX:AUDUSD', category: 'Forex', icon: '🦘' },
+  { id: 'usdcad', name: 'USD/CAD', symbol: 'USD/CAD', tvSymbol: 'FX:USDCAD', category: 'Forex', icon: '🍁' },
+  { id: 'usdchf', name: 'USD/CHF', symbol: 'USD/CHF', tvSymbol: 'FX:USDCHF', category: 'Forex', icon: '🇨🇭' },
+  { id: 'nzdusd', name: 'NZD/USD', symbol: 'NZD/USD', tvSymbol: 'FX:NZDUSD', category: 'Forex', icon: '🥝' },
+  { id: 'btcusd', name: 'Bitcoin', symbol: 'BTC/USD', tvSymbol: 'BINANCE:BTCUSDT', category: 'Crypto', icon: '₿' },
+  { id: 'ethusd', name: 'Ethereum', symbol: 'ETH/USD', tvSymbol: 'BINANCE:ETHUSDT', category: 'Crypto', icon: '⟠' },
+  { id: 'xauusd', name: 'Gold', symbol: 'XAU/USD', tvSymbol: 'TVC:GOLD', category: 'Commodities', icon: '🥇' },
+  { id: 'cl', name: 'Crude Oil', symbol: 'CL', tvSymbol: 'TVC:USOIL', category: 'Commodities', icon: '🛢️' },
+];
 
 // Random date generator - picks a valid trading day
 export function getRandomTradingDate() {
@@ -43,48 +25,94 @@ export function getRandomTradingDate() {
   do {
     const randomTime = start.getTime() + Math.random() * (end.getTime() - start.getTime());
     date = new Date(randomTime);
-  } while (date.getDay() === 0 || date.getDay() === 6); // Skip weekends
+  } while (date.getDay() === 0 || date.getDay() === 6);
 
-  // Set to market open (9:30 AM ET = 14:30 UTC for US markets)
   date.setUTCHours(14, 30, 0, 0);
-  
   return date;
 }
 
-// Available markets
-export const MARKETS = [
-  { id: 'spy', name: 'S&P 500', symbol: 'SPY', category: 'Indices', icon: '📈' },
-  { id: 'qqq', name: 'NASDAQ 100', symbol: 'QQQ', category: 'Indices', icon: '📊' },
-  { id: 'dia', name: 'Dow Jones', symbol: 'DIA', category: 'Indices', icon: '🏛️' },
-  { id: 'eurusd', name: 'EUR/USD', symbol: 'EUR/USD', category: 'Forex', icon: '💱' },
-  { id: 'gbpusd', name: 'GBP/USD', symbol: 'GBP/USD', category: 'Forex', icon: '💷' },
-  { id: 'usdjpy', name: 'USD/JPY', symbol: 'USD/JPY', category: 'Forex', icon: '💴' },
-  { id: 'audusd', name: 'AUD/USD', symbol: 'AUD/USD', category: 'Forex', icon: '🦘' },
-  { id: 'btcusd', name: 'Bitcoin', symbol: 'BTC/USD', category: 'Crypto', icon: '₿' },
-  { id: 'ethusd', name: 'Ethereum', symbol: 'ETH/USD', category: 'Crypto', icon: '⟠' },
-  { id: 'xauusd', name: 'Gold', symbol: 'XAU/USD', category: 'Commodities', icon: '🥇' },
-  { id: 'cl', name: 'Crude Oil', symbol: 'CL', category: 'Commodities', icon: '🛢️' },
-];
+// NYT API key
+const NYT_API_KEY = 'Il4DrKOuBLkjbcekZEY9QM6Ear0AArBarSENf7ALlmgRPSmO';
 
-// Mock news headlines
-export function generateHeadlines(date) {
-  const dateStr = date.toLocaleDateString('en-US', { 
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-  });
+// Fetch real news from NY Times Archive API for a given date
+export async function fetchRealNews(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const dateStr = date.toISOString().split('T')[0];
   
-  return {
-    date: dateStr,
-    headlines: [
-      { category: '🌍 World', title: 'Global markets react to central bank policy decisions', source: 'Reuters', time: '08:30 AM' },
-      { category: '💰 Markets', title: 'Futures point to mixed open as investors weigh economic data', source: 'Bloomberg', time: '07:15 AM' },
-      { category: '🏛️ Politics', title: 'Congressional leaders announce bipartisan infrastructure talks', source: 'AP News', time: '09:00 AM' },
-      { category: '🏢 Business', title: 'Tech sector earnings beat expectations amid AI investment surge', source: 'CNBC', time: '06:45 AM' },
-      { category: '📊 Economy', title: 'Jobs report shows steady growth, unemployment holds steady', source: 'WSJ', time: '08:00 AM' },
-      { category: '🌏 Asia', title: 'Asian markets close higher on trade optimism', source: 'Nikkei', time: '04:00 AM' },
-      { category: '🇪🇺 Europe', title: 'European stocks advance as ECB signals policy shift', source: 'FT', time: '05:30 AM' },
-      { category: '⚡ Breaking', title: 'Major merger announced in healthcare sector', source: 'MarketWatch', time: '10:15 AM' },
-    ],
-  };
+  try {
+    const res = await fetch(
+      `https://api.nytimes.com/svc/archive/v1/${year}/${month}.json?api-key=${NYT_API_KEY}`
+    );
+    const data = await res.json();
+    const docs = data.response?.docs || [];
+    
+    // Filter to articles from that specific date
+    const dayArticles = docs.filter(a => a.pub_date?.startsWith(dateStr));
+    
+    // Categorize articles
+    const categorized = {
+      '🌍 World': [],
+      '💰 Markets': [],
+      '🏛️ Politics': [],
+      '🏢 Business': [],
+      '📊 Economy': [],
+      '🌏 Asia': [],
+      '🇪🇺 Europe': [],
+      '⚡ Breaking': [],
+    };
+    
+    dayArticles.forEach(a => {
+      const headline = a.headline?.main || '';
+      const abstract = a.abstract || '';
+      const lead = a.lead_paragraph || '';
+      const section = (a.section_name || '').toLowerCase();
+      const url = a.web_url || '';
+      const source = a.source || 'NY Times';
+      const time = a.pub_date ? new Date(a.pub_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '';
+      
+      const item = { title: headline, abstract, lead, source, time, url };
+      
+      if (section.includes('world') || section.includes('international')) {
+        categorized['🌍 World'].push(item);
+      } else if (section.includes('business') || section.includes('market') || section.includes('finance')) {
+        categorized['💰 Markets'].push(item);
+        categorized['🏢 Business'].push(item);
+      } else if (section.includes('politic') || section.includes('washington')) {
+        categorized['🏛️ Politics'].push(item);
+      } else if (section.includes('economy') || section.includes('economic')) {
+        categorized['📊 Economy'].push(item);
+      } else if (section.includes('asia')) {
+        categorized['🌏 Asia'].push(item);
+      } else if (section.includes('europe')) {
+        categorized['🇪🇺 Europe'].push(item);
+      } else {
+        categorized['⚡ Breaking'].push(item);
+      }
+    });
+    
+    // Take top items per category
+    const headlines = Object.entries(categorized)
+      .filter(([_, items]) => items.length > 0)
+      .map(([category, items]) => ({
+        category,
+        items: items.slice(0, 5),
+      }));
+    
+    return {
+      date: date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      sections: headlines,
+      totalArticles: dayArticles.length,
+    };
+  } catch (err) {
+    console.error('News fetch error:', err);
+    return {
+      date: date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      sections: [],
+      totalArticles: 0,
+      error: true,
+    };
+  }
 }
 
 // Mock leaderboard

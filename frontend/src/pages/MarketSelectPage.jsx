@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MARKETS, getRandomTradingDate, generateHeadlines } from '../utils/mockData';
+import { MARKETS, getRandomTradingDate, fetchRealNews } from '../utils/mockData';
 import './MarketSelectPage.css';
 
 export default function MarketSelectPage() {
@@ -8,6 +8,9 @@ export default function MarketSelectPage() {
   const [tradingDate, setTradingDate] = useState(null);
   const [showNews, setShowNews] = useState(false);
   const [newsSearch, setNewsSearch] = useState('');
+  const [newsData, setNewsData] = useState(null);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [expandedSection, setExpandedSection] = useState(null);
   const [headlines, setHeadlines] = useState(null);
   const displayName = localStorage.getItem('tt_displayName') || 'Trader';
   const balance = parseInt(localStorage.getItem('tt_balance') || '1000');
@@ -15,8 +18,8 @@ export default function MarketSelectPage() {
   useEffect(() => {
     const date = getRandomTradingDate();
     setTradingDate(date);
-    setHeadlines(generateHeadlines(date));
     localStorage.setItem('tt_tradingDate', date.toISOString());
+    localStorage.setItem('tt_startBalance', balance.toString());
   }, []);
 
   const handleSelectMarket = (marketId) => {
@@ -77,7 +80,15 @@ export default function MarketSelectPage() {
           </div>
         </div>
         <div className="date-actions">
-          <button className="news-btn" onClick={() => setShowNews(!showNews)}>
+          <button className="news-btn" onClick={async () => {
+            setShowNews(!showNews);
+            if (!newsData && !newsLoading) {
+              setNewsLoading(true);
+              const data = await fetchRealNews(tradingDate);
+              setNewsData(data);
+              setNewsLoading(false);
+            }
+          }}>
             📰 {showNews ? 'Hide' : 'View'} Daily Brief
           </button>
         </div>
@@ -96,26 +107,58 @@ export default function MarketSelectPage() {
                 placeholder="Search archived websites (Wayback Machine)..."
                 value={newsSearch}
                 onChange={(e) => setNewsSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newsSearch.trim()) {
+                    const dateStr = tradingDate.toISOString().split('T')[0].replace(/-/g, '');
+                    window.open(`https://web.archive.org/web/${dateStr}*/${newsSearch}`, '_blank');
+                  }
+                }}
               />
-              <button className="search-go">🔍</button>
+              <button className="search-go" onClick={() => {
+                if (newsSearch.trim()) {
+                  const dateStr = tradingDate.toISOString().split('T')[0].replace(/-/g, '');
+                  window.open(`https://web.archive.org/web/${dateStr}*/${newsSearch}`, '_blank');
+                }
+              }}>🔍</button>
             </div>
             <div className="news-list">
-              {headlines?.headlines.map((h, i) => (
-                <div key={i} className="news-item">
-                  <span className="news-category">{h.category}</span>
-                  <div className="news-body">
-                    <h4>{h.title}</h4>
-                    <div className="news-meta">
-                      <span>{h.source}</span>
-                      <span>•</span>
-                      <span>{h.time}</span>
-                    </div>
-                  </div>
+              {newsLoading ? (
+                <div style={{textAlign:'center',padding:'2rem',color:'var(--text-secondary)'}}>
+                  <p>Loading real headlines...</p>
                 </div>
-              ))}
+              ) : newsData?.sections?.length > 0 ? (
+                newsData.sections.map((section, i) => (
+                  <div key={i} className="news-section-wrap">
+                    <button
+                      className={`news-section-btn ${expandedSection === i ? 'open' : ''}`}
+                      onClick={() => setExpandedSection(expandedSection === i ? null : i)}
+                    >
+                      <span>{section.category}</span>
+                      <span style={{marginLeft:'auto',fontSize:'0.75rem',color:'var(--text-muted)'}}>{section.items.length} articles</span>
+                      <span style={{color:'var(--text-muted)',fontSize:'0.8rem'}}>{expandedSection === i ? '▾' : '▸'}</span>
+                    </button>
+                    {expandedSection === i && section.items.map((item, j) => (
+                      <div key={j} className="news-item">
+                        <div className="news-body">
+                          <h4>{item.title}</h4>
+                          {item.abstract && <p style={{fontSize:'0.8rem',color:'var(--text-secondary)',lineHeight:1.5,margin:'0.3rem 0'}}>{item.abstract}</p>}
+                          <div className="news-meta">
+                            <span>{item.source}</span>
+                            <span>•</span>
+                            <span>{item.time}</span>
+                            {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'none',marginLeft:'auto'}}>Read full →</a>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div style={{textAlign:'center',padding:'2rem',color:'var(--text-muted)'}}>No articles found.</div>
+              )}
             </div>
             <div className="news-footer">
-              <p>Headlines generated by AI based on historical events</p>
+              <p>📰 {newsData?.totalArticles || 0} real articles from NY Times archive</p>
             </div>
           </div>
         </div>

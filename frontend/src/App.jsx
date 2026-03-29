@@ -7,7 +7,7 @@ import './App.css';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/time-trader">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/markets" element={<MarketSelectPage />} />

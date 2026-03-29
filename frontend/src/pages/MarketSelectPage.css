@@ -280,6 +280,29 @@
   color: var(--text-muted);
 }
 
+.news-section-wrap {
+  border-bottom: 1px solid var(--border);
+}
+
+.news-section-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.news-section-btn:hover, .news-section-btn.open {
+  background: var(--bg-card);
+}
+
 /* Market grid */
 .market-grid-section {
   max-width: 800px;
